@@ -32,9 +32,9 @@
     },
     {
       "author": "Stebalien",
-      "hash": "QmUQy76yspPa3fRyY3GzXFTg9n8JVwFru6ue3KFRt4MeTw",
+      "hash": "QmZRt3dzgDWkjssrmNvBKVNJpLBMafJi5AKpdfMkbfWRu5",
       "name": "go-buffer-pool",
-      "version": "0.1.1"
+      "version": "0.1.2"
     }
   ],
   "gxVersion": "0.12.1",
@@ -42,6 +42,6 @@
   "license": "MIT",
   "name": "go-ipfs-chunker",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "0.1.1"
+  "version": "0.1.2"
 }
 
