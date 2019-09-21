@@ -23,6 +23,16 @@ type Splitter interface {
 	NextBytes() ([]byte, error)
 }
 
+// A MultiSplitter encapsulates multiple splitters useful for concurrent
+// reading of chunks and also specialized dag building schemas.
+// Each MultiSplitter also provides Splitter-compatible interface
+// to read sequentially (the Splitter-default way).
+type MultiSplitter interface {
+	Splitter
+
+	Splitters() []Splitter
+}
+
 // SplitterGen is a splitter generator, given a reader.
 type SplitterGen func(r io.Reader) Splitter
 
