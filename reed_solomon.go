@@ -2,7 +2,6 @@ package chunk
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"sync"
@@ -42,42 +41,46 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 		// Copy it to a buffer as a last resort.
 		b, err := ioutil.ReadAll(r)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		fileSize = len(b)
+		fileSize = int64(len(b))
 		// Re-pack reader
 		r = bytes.NewReader(b)
 	}
 
 	rss, err := rs.NewStreamC(int(numData), int(numParity), true, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Setup pipes feeding from encoded shards to individual splitter readers
 	var spls []Splitter
-	var splReaders []io.Reader    // splitting readers
-	var encReaders []io.Reader    // encoding readers
-	var dataWriters []io.Writer   // data writers, dup to both splitter and encoder
-	var parityWriters []io.Writer // parity writers, once
-	for i := 0; i < numData+numParity; i++ {
+	var splReaders []io.Reader             // splitting readers
+	var encReaders []io.Reader             // encoding readers
+	var dataWriters []io.Writer            // data writers, dup to both splitter and encoder
+	var dataPipeWriters []*io.PipeWriter   // same as above, for Close/cleanup
+	var parityWriters []io.Writer          // parity writers, once
+	var parityPipeWriters []*io.PipeWriter // same as above, for Close/cleanup
+	for i := 0; i < int(numData+numParity); i++ {
 		sr, sw := io.Pipe()
 		s := NewSizeSplitter(sr, int64(size))
 		spls = append(spls, s)
 		splReaders = append(splReaders, sr)
-		if i < numData {
+		if i < int(numData) {
 			// Create another pipe for split -> encode
 			esr, esw := io.Pipe()
 			encReaders = append(encReaders, esr)
 			// Dup to both encoder and (then) splitter
 			dataWriters = append(dataWriters, io.MultiWriter(esw, sw))
+			dataPipeWriters = append(dataPipeWriters, esw, sw)
 		} else {
 			parityWriters = append(parityWriters, sw)
+			parityPipeWriters = append(parityPipeWriters, sw)
 		}
 	}
 
 	rsSpl := &reedSolomonSplitter{
-		r:         io.MultiReader(splReaders), // concatenate all shard chunks
+		r:         io.MultiReader(splReaders...), // concatenate all shard chunks
 		spls:      spls,
 		numData:   numData,
 		numParity: numParity,
@@ -92,7 +95,7 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 			rsSpl.setError(err)
 		}
 		// Close to finish writing
-		for _, dw := range dataWriters {
+		for _, dw := range dataPipeWriters {
 			dw.Close()
 		}
 	}()
@@ -105,12 +108,12 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 			rsSpl.setError(err)
 		}
 		// Close to finish writing
-		for _, pw := range parityWriters {
+		for _, pw := range parityPipeWriters {
 			pw.Close()
 		}
 	}()
 
-	return rsSpl
+	return rsSpl, nil
 }
 
 // Reader returns the overall io.Reader associated with this MultiSplitter.
