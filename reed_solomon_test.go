@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	testRsDefaultNumData   = 20
-	testRsDefaultNumParity = 10
+	testRsDefaultNumData   = 10
+	testRsDefaultNumParity = 20
 	testRsDefaultSize      = 1024 * 256
 )
 
