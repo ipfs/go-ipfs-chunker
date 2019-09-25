@@ -14,7 +14,7 @@ import (
 var log = logging.Logger("chunk")
 
 // DefaultBlockSize is the chunk size that splitters produce (or aim to).
-var DefaultBlockSize int64 = 1024 * 256
+const DefaultBlockSize int64 = 1024 * 256
 
 // A Splitter reads bytes from a Reader and creates "chunks" (byte slices)
 // that can be used to build DAG nodes.

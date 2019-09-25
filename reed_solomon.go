@@ -10,6 +10,12 @@ import (
 	rs "github.com/klauspost/reedsolomon"
 )
 
+const (
+	DefaultReedSolomonDataShards   = 10
+	DefaultReedSolomonParityShards = 20
+	DefaultReedSolomonShardSize    = DefaultBlockSize
+)
+
 // reedSolomonSplitter implements the MultiSplitter interface and splits into multiple
 // Splitters based on data + parity shards. Each Splitter corresponds to one
 // Reed-Solomon shard and splits using the default SizeSplitter.
