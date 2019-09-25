@@ -156,6 +156,11 @@ func (rss *reedSolomonSplitter) NextBytes() ([]byte, error) {
 	return b, nil
 }
 
+// Splitters returns the underlying individual splitters.
+func (rss *reedSolomonSplitter) Splitters() []Splitter {
+	return rss.spls
+}
+
 // setError saves the first error so it can be returned to caller or other functions.
 func (rss *reedSolomonSplitter) setError(err error) {
 	rss.Lock()
