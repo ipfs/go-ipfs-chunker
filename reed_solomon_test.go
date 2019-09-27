@@ -3,6 +3,7 @@ package chunk
 import (
 	"bytes"
 	"io"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ const (
 
 func getReedSolomonShards(t *testing.T, dataShards, parityShards, size uint64) (
 	[][]byte, MultiSplitter) {
-	max := 10000000
+	max := 61981547
 	b := randBuf(t, max)
 
 	// Create reference split shards
@@ -114,8 +115,12 @@ func TestReedSolomonSplitterSplitMergeGoroutines(t *testing.T) {
 	spls := spl.Splitters()
 
 	// Launch goroutines to fetch each shard through the individual splitters
+	var wg sync.WaitGroup
 	for sn := 0; sn < testRsDefaultNumData+testRsDefaultNumParity; sn++ {
+		wg.Add(1)
 		go func(sn int) {
+			defer wg.Done()
+
 			spl := spls[sn]
 			c, errc := Chan(spl)
 
@@ -151,4 +156,6 @@ func TestReedSolomonSplitterSplitMergeGoroutines(t *testing.T) {
 			}
 		}(sn)
 	}
+
+	wg.Wait()
 }
