@@ -34,27 +34,6 @@ type reedSolomonSplitter struct {
 	err       error
 }
 
-// limitPipeWriter auto closes the pipe after receiving n bytes
-type limitPipeWriter struct {
-	written int64
-	limit   int64
-	w       *io.PipeWriter
-}
-
-func newLimitPipeWriter(w *io.PipeWriter, limit int64) *limitPipeWriter {
-	return &limitPipeWriter{0, limit, w}
-}
-
-func (lpw *limitPipeWriter) Write(p []byte) (n int, err error) {
-	n, err = lpw.w.Write(p)
-	lpw.written += int64(n)
-	// Auto-close if byte size is reached
-	if lpw.written >= lpw.limit || err != nil {
-		lpw.w.Close()
-	}
-	return
-}
-
 // NewReedSolomonSplitter takes in the number of data and parity chards, plus
 // a size splitting the shards and returns a ReedSolomonSplitter.
 func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
@@ -80,31 +59,46 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 		return nil, err
 	}
 
-	// Pre-compute padded-equal shard length so we know when to close pipes
-	shardLen := (fileSize + int64(numData) - 1) / int64(numData)
-
-	// Setup pipes feeding from encoded shards to individual splitter readers
-	var spls []Splitter
-	var splReaders []io.Reader    // splitting readers
-	var encReaders []io.Reader    // encoding readers
-	var dataWriters []io.Writer   // data writers, dup to both splitter and encoder
-	var parityWriters []io.Writer // parity writers, once
+	var bufs []*bytes.Buffer
 	for i := 0; i < int(numData+numParity); i++ {
-		sr, sw := io.Pipe()
-		s := NewSizeSplitter(sr, int64(size))
-		spls = append(spls, s)
-		splReaders = append(splReaders, sr)
-		lsw := newLimitPipeWriter(sw, shardLen)
-		if i < int(numData) {
-			// Create another pipe for split -> encode
-			esr, esw := io.Pipe()
-			encReaders = append(encReaders, esr)
-			// Dup to both encoder and (then) splitter
-			lesw := newLimitPipeWriter(esw, shardLen)
-			dataWriters = append(dataWriters, io.MultiWriter(lesw, lsw))
+		bufs = append(bufs, &bytes.Buffer{})
+	}
+	var dataWriters []io.Writer
+	var parityWriters []io.Writer
+	for i, b := range bufs {
+		if uint64(i) < numData {
+			dataWriters = append(dataWriters, io.Writer(b))
 		} else {
-			parityWriters = append(parityWriters, lsw)
+			parityWriters = append(parityWriters, io.Writer(b))
 		}
+	}
+	// Split data into even data shards first
+	err = rss.Split(r, dataWriters, fileSize)
+	if err != nil {
+		return nil, err
+	}
+	var encReaders []io.Reader
+	for i, b := range bufs {
+		if uint64(i) < numData {
+			// Create new readers so buffers can be read by splitters below
+			encReaders = append(encReaders, bytes.NewReader(b.Bytes()))
+		} else {
+			break
+		}
+	}
+	// Encode parity shards
+	err = rss.Encode(encReaders, parityWriters)
+	if err != nil {
+		return nil, err
+	}
+
+	// Make multiple splitters reading from the buffered shards
+	var spls []Splitter
+	var splReaders []io.Reader // splitting readers
+	for _, b := range bufs {
+		s := NewSizeSplitter(b, int64(size))
+		spls = append(spls, s)
+		splReaders = append(splReaders, b)
 	}
 
 	rsSpl := &reedSolomonSplitter{
@@ -114,24 +108,6 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 		numParity: numParity,
 		size:      size,
 	}
-
-	// Run in the background to provide streamed splitting
-	go func() {
-		// Split data into even data shards first
-		err := rss.Split(r, dataWriters, fileSize)
-		if err != nil {
-			rsSpl.setError(err)
-		}
-	}()
-
-	// Run in the background to provide streamed encoding
-	go func() {
-		// Encode parity shards
-		err := rss.Encode(encReaders, parityWriters)
-		if err != nil {
-			rsSpl.setError(err)
-		}
-	}()
 
 	return rsSpl, nil
 }
