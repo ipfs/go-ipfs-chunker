@@ -10,12 +10,13 @@ import (
 
 var (
 	ErrRabinMin = errors.New("rabin min must be greater than 16")
-	ErrSize     = errors.New("chunker size muster greater than 0")
+	ErrSize     = errors.New("chunker size must be greater than 0")
 )
 
 // FromString returns a Splitter depending on the given string:
-// it supports "default" (""), "size-{size}", "rabin", "rabin-{blocksize}" and
-// "rabin-{min}-{avg}-{max}".
+// it supports "default" (""), "size-{size}", "rabin", "rabin-{blocksize}",
+// "rabin-{min}-{avg}-{max}", "reed-solomon", and
+// "reed-solomon-{#data}-{#parity}-{size}".
 func FromString(r io.Reader, chunker string) (Splitter, error) {
 	switch {
 	case chunker == "" || chunker == "default":
@@ -33,6 +34,9 @@ func FromString(r io.Reader, chunker string) (Splitter, error) {
 
 	case strings.HasPrefix(chunker, "rabin"):
 		return parseRabinString(r, chunker)
+
+	case strings.HasPrefix(chunker, "reed-solomon"):
+		return parseReedSolomonString(r, chunker)
 
 	default:
 		return nil, fmt.Errorf("unrecognized chunker option: %s", chunker)
@@ -83,6 +87,45 @@ func parseRabinString(r io.Reader, chunker string) (Splitter, error) {
 
 		return NewRabinMinMax(r, uint64(min), uint64(avg), uint64(max)), nil
 	default:
-		return nil, errors.New("incorrect format (expected 'rabin' 'rabin-[avg]' or 'rabin-[min]-[avg]-[max]'")
+		return nil, errors.New("incorrect format (expected 'rabin' 'rabin-[avg]' or 'rabin-[min]-[avg]-[max]')")
+	}
+}
+
+func parseReedSolomonString(r io.Reader, chunker string) (Splitter, error) {
+	parts := strings.Split(chunker, "-")
+	switch len(parts) {
+	case 2:
+		return NewReedSolomonSplitter(r,
+			uint64(DefaultReedSolomonDataShards),
+			uint64(DefaultReedSolomonParityShards),
+			uint64(DefaultReedSolomonShardSize))
+	case 5:
+		nd, err := strconv.Atoi(parts[2])
+		if err != nil {
+			return nil, err
+		}
+		pd, err := strconv.Atoi(parts[3])
+		if err != nil {
+			return nil, err
+		}
+		if nd <= 0 {
+			return nil, errors.New("invalid number of data shards")
+		}
+		if pd <= 0 {
+			return nil, errors.New("invalid number of parity shards")
+		}
+		if nd+pd > 256 {
+			return nil, errors.New("cannot encode more than 256 shards (data+parity)")
+		}
+		size, err := strconv.Atoi(parts[4])
+		if err != nil {
+			return nil, err
+		}
+		if size <= 0 {
+			return nil, ErrSize
+		}
+		return NewReedSolomonSplitter(r, uint64(nd), uint64(pd), uint64(size))
+	default:
+		return nil, errors.New("incorrect format (expected 'reed-solomon' or 'reed-solomon-[#data]-[#parity]-[size]')")
 	}
 }
