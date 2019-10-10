@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
-	"sync"
 
 	"github.com/TRON-US/go-btfs-files"
 	rs "github.com/klauspost/reedsolomon"
@@ -23,8 +22,6 @@ const (
 // The default Splitter interface for ReedSolomonSplitter is a serialized
 // read of all shard chunks.
 type reedSolomonSplitter struct {
-	sync.Mutex
-
 	r         io.Reader
 	spls      []Splitter
 	splIndex  int
@@ -123,6 +120,10 @@ func (rss *reedSolomonSplitter) Reader() io.Reader {
 }
 
 // NextBytes produces a new chunk in the MultiSplitter.
+// NOTE: This is for backward compatibility of Splitter interface.
+// NOTE: This serialized read is only used by testing routines.
+// NOTE: Functional usage should access each individual's NextBytes()
+// separately/concurrently within Splitters().
 func (rss *reedSolomonSplitter) NextBytes() ([]byte, error) {
 	if rss.err != nil {
 		return nil, rss.err
@@ -150,9 +151,6 @@ func (rss *reedSolomonSplitter) Splitters() []Splitter {
 
 // setError saves the first error so it can be returned to caller or other functions.
 func (rss *reedSolomonSplitter) setError(err error) {
-	rss.Lock()
-	defer rss.Unlock()
-
 	if rss.err != nil {
 		rss.err = err
 	}
