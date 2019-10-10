@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
-	"sync"
 
-	"github.com/ipfs/go-ipfs-files"
+	"github.com/TRON-US/go-btfs-files"
 	rs "github.com/klauspost/reedsolomon"
 )
 
@@ -23,8 +22,6 @@ const (
 // The default Splitter interface for ReedSolomonSplitter is a serialized
 // read of all shard chunks.
 type reedSolomonSplitter struct {
-	sync.Mutex
-
 	r         io.Reader
 	spls      []Splitter
 	splIndex  int
@@ -39,9 +36,14 @@ type reedSolomonSplitter struct {
 func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 	*reedSolomonSplitter, error) {
 	var fileSize int64
-	if fi, ok := r.(files.FileInfo); ok {
-		fileSize = fi.Stat().Size()
-	} else {
+	var err error
+	fi, ok := r.(files.FileInfo)
+	if ok {
+		fileSize, err = fi.Size()
+	}
+	// If not a FileInfo object, or fails to fetch a size, try reading
+	// the whole stream in order to obtain size (this is common for testing).
+	if !ok || err != nil {
 		// Not a file object, but we need to know the full size before
 		// being streamed for reed-solomon encoding.
 		// Copy it to a buffer as a last resort.
@@ -118,6 +120,10 @@ func (rss *reedSolomonSplitter) Reader() io.Reader {
 }
 
 // NextBytes produces a new chunk in the MultiSplitter.
+// NOTE: This is for backward compatibility of Splitter interface.
+// NOTE: This serialized read is only used by testing routines.
+// NOTE: Functional usage should access each individual's NextBytes()
+// separately/concurrently within Splitters().
 func (rss *reedSolomonSplitter) NextBytes() ([]byte, error) {
 	if rss.err != nil {
 		return nil, rss.err
@@ -145,9 +151,6 @@ func (rss *reedSolomonSplitter) Splitters() []Splitter {
 
 // setError saves the first error so it can be returned to caller or other functions.
 func (rss *reedSolomonSplitter) setError(err error) {
-	rss.Lock()
-	defer rss.Unlock()
-
 	if rss.err != nil {
 		rss.err = err
 	}
