@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/ipfs/go-ipfs-files"
+	"github.com/TRON-US/go-btfs-files"
 	rs "github.com/klauspost/reedsolomon"
 )
 
@@ -39,9 +39,14 @@ type reedSolomonSplitter struct {
 func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 	*reedSolomonSplitter, error) {
 	var fileSize int64
-	if fi, ok := r.(files.FileInfo); ok {
-		fileSize = fi.Stat().Size()
-	} else {
+	var err error
+	fi, ok := r.(files.FileInfo)
+	if ok {
+		fileSize, err = fi.Size()
+	}
+	// If not a FileInfo object, or fails to fetch a size, try reading
+	// the whole stream in order to obtain size (this is common for testing).
+	if !ok || err != nil {
 		// Not a file object, but we need to know the full size before
 		// being streamed for reed-solomon encoding.
 		// Copy it to a buffer as a last resort.
