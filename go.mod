@@ -1,7 +1,7 @@
 module github.com/TRON-US/go-btfs-chunker
 
 require (
-	github.com/TRON-US/go-btfs-files v0.1.0
+	github.com/TRON-US/go-btfs-files v0.1.1
 	github.com/ipfs/go-block-format v0.0.2
 	github.com/ipfs/go-ipfs-util v0.0.1
 	github.com/ipfs/go-log v0.0.1
