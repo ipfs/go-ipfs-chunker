@@ -15,7 +15,7 @@ var IpfsRabinPoly = chunker.Pol(17437180132763653)
 type Rabin struct {
 	r      *chunker.Chunker
 	reader io.Reader
-	size   uint32
+	size   uint64
 }
 
 // NewRabin creates a new Rabin splitter with the given
@@ -36,7 +36,7 @@ func NewRabinMinMax(r io.Reader, min, avg, max uint64) *Rabin {
 	return &Rabin{
 		r:      ch,
 		reader: r,
-		size:   uint32(avg),
+		size:   uint64(avg),
 	}
 }
 
@@ -56,6 +56,6 @@ func (r *Rabin) Reader() io.Reader {
 }
 
 // Size returns the chunk size of this Splitter.
-func (r *Rabin) Chunksize() uint32 {
+func (r *Rabin) Chunksize() uint64 {
 	return r.size
 }
