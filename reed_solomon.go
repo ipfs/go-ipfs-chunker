@@ -144,8 +144,8 @@ func (rss *reedSolomonSplitter) NextBytes() ([]byte, error) {
 	return b, nil
 }
 
-// Chunksize returns the chunk size of this Splitter.
-func (rss *reedSolomonSplitter) Chunksize() uint64 {
+// ChunkSize returns the chunk size of this Splitter.
+func (rss *reedSolomonSplitter) ChunkSize() uint64 {
 	return uint64(rss.size)
 }
 

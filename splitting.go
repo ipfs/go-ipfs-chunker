@@ -21,7 +21,7 @@ const DefaultBlockSize int64 = 1024 * 256
 type Splitter interface {
 	Reader() io.Reader
 	NextBytes() ([]byte, error)
-	Chunksize() uint64
+	ChunkSize() uint64
 }
 
 // A MultiSplitter encapsulates multiple splitters useful for concurrent
@@ -116,6 +116,6 @@ func (ss *sizeSplitterv2) Reader() io.Reader {
 }
 
 // Size returns the chunk size of this Splitter.
-func (ss *sizeSplitterv2) Chunksize() uint64 {
+func (ss *sizeSplitterv2) ChunkSize() uint64 {
 	return uint64(ss.size)
 }

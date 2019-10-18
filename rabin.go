@@ -56,6 +56,6 @@ func (r *Rabin) Reader() io.Reader {
 }
 
 // Size returns the chunk size of this Splitter.
-func (r *Rabin) Chunksize() uint64 {
+func (r *Rabin) ChunkSize() uint64 {
 	return r.size
 }
