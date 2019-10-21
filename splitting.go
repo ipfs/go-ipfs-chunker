@@ -34,6 +34,12 @@ type MultiSplitter interface {
 	Splitters() []Splitter
 }
 
+type MetaSplitter struct {
+	r    io.Reader
+	size uint64
+	err  error
+}
+
 // SplitterGen is a splitter generator, given a reader.
 type SplitterGen func(r io.Reader) Splitter
 
@@ -118,4 +124,45 @@ func (ss *sizeSplitterv2) Reader() io.Reader {
 // Size returns the chunk size of this Splitter.
 func (ss *sizeSplitterv2) ChunkSize() uint64 {
 	return uint64(ss.size)
+}
+
+// NextBytes produces a new chunk.
+func (ms *MetaSplitter) NextBytes() ([]byte, error) {
+	if ms.err != nil {
+		return nil, ms.err
+	}
+
+	// Return a new metadata chunk
+	buf := make([]byte, ms.size)
+	n, err := io.ReadFull(ms.r, buf)
+	switch err {
+	case io.ErrUnexpectedEOF:
+		ms.err = io.EOF
+		small := make([]byte, n)
+		copy(small, buf)
+		buf = nil
+		return small, nil
+	case nil:
+		return buf, nil
+	default:
+		buf = nil
+		return nil, err
+	}
+}
+
+// Reader returns the io.Reader associated to this Splitter.
+func (ms *MetaSplitter) Reader() io.Reader {
+	return ms.r
+}
+
+// ChunkSize returns the chunk size of this Splitter.
+func (rss *MetaSplitter) ChunkSize() uint64 {
+	return uint64(rss.size)
+}
+
+func NewMetaSplitter(r io.Reader, size uint64) Splitter {
+	return &MetaSplitter{
+		r:    r,
+		size: size,
+	}
 }
