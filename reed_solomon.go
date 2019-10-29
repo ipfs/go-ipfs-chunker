@@ -28,6 +28,7 @@ type reedSolomonSplitter struct {
 	numData   uint64
 	numParity uint64
 	size      uint64
+	fileSize  uint64
 	err       error
 }
 
@@ -109,6 +110,7 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 		numData:   numData,
 		numParity: numParity,
 		size:      size,
+		fileSize:  uint64(fileSize),
 	}
 
 	return rsSpl, nil
@@ -152,6 +154,17 @@ func (rss *reedSolomonSplitter) ChunkSize() uint64 {
 // Splitters returns the underlying individual splitters.
 func (rss *reedSolomonSplitter) Splitters() []Splitter {
 	return rss.spls
+}
+
+type RsMetaMap struct {
+	NumData   uint64
+	NumParity uint64
+	FileSize  uint64
+}
+
+// MetaData returns metadata object of this reed solomon scheme.
+func (rss *reedSolomonSplitter) MetaData() interface{} {
+	return &RsMetaMap{NumData: rss.numData, NumParity: rss.numParity, FileSize: rss.fileSize}
 }
 
 // setError saves the first error so it can be returned to caller or other functions.

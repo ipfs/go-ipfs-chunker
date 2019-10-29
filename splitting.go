@@ -22,6 +22,7 @@ type Splitter interface {
 	Reader() io.Reader
 	NextBytes() ([]byte, error)
 	ChunkSize() uint64
+	MetaData() interface{}
 }
 
 // A MultiSplitter encapsulates multiple splitters useful for concurrent
@@ -121,9 +122,21 @@ func (ss *sizeSplitterv2) Reader() io.Reader {
 	return ss.r
 }
 
-// Size returns the chunk size of this Splitter.
+// ChunkSize returns the chunk size of this Splitter.
 func (ss *sizeSplitterv2) ChunkSize() uint64 {
 	return uint64(ss.size)
+}
+
+// MetaData returns metadata object from this chunker (none).
+func (ss *sizeSplitterv2) MetaData() interface{} {
+	return nil
+}
+
+func NewMetaSplitter(r io.Reader, size uint64) Splitter {
+	return &MetaSplitter{
+		r:    r,
+		size: size,
+	}
 }
 
 // NextBytes produces a new chunk.
@@ -160,9 +173,7 @@ func (ms *MetaSplitter) ChunkSize() uint64 {
 	return uint64(ms.size)
 }
 
-func NewMetaSplitter(r io.Reader, size uint64) Splitter {
-	return &MetaSplitter{
-		r:    r,
-		size: size,
-	}
+// MetaData returns metadata object from this chunker (none).
+func (ms *MetaSplitter) MetaData() interface{} {
+	return nil
 }

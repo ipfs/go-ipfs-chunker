@@ -55,7 +55,12 @@ func (r *Rabin) Reader() io.Reader {
 	return r.reader
 }
 
-// Size returns the chunk size of this Splitter.
+// ChunkSize returns the chunk size of this Splitter.
 func (r *Rabin) ChunkSize() uint64 {
 	return r.size
+}
+
+// MetaData returns metadata object from this chunker (none).
+func (r *Rabin) MetaData() interface{} {
+	return nil
 }
