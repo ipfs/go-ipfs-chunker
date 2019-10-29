@@ -51,6 +51,17 @@ func getReedSolomonShards(t *testing.T, dataShards, parityShards, size uint64) (
 		t.Fatal("unable to create reed solomon splitter", err)
 	}
 
+	md, ok := spl.MetaData().(*RsMetaMap)
+	if !ok {
+		t.Fatal("unable to get metadata map type from reed solomon splitter")
+	}
+	if md.NumData != dataShards ||
+		md.NumParity != parityShards ||
+		md.FileSize != uint64(max) {
+		t.Fatalf("reed solomon splitter metadata [%d %d %d] do not match set parameters [%d %d %d]",
+			md.NumData, md.NumParity, md.FileSize, dataShards, parityShards, max)
+	}
+
 	return shards, spl
 }
 
