@@ -57,6 +57,12 @@ func SizeSplitterGen(size int64) SplitterGen {
 	}
 }
 
+func MetaSplitterGen(size int64) SplitterGen {
+	return func(r io.Reader) Splitter {
+		return NewMetaSplitter(r, uint64(size))
+	}
+}
+
 // Chan returns a channel that receives each of the chunks produced
 // by a splitter, along with another one for errors.
 func Chan(s Splitter) (<-chan []byte, <-chan error) {
