@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -79,6 +80,16 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 	err = rss.Split(r, dataWriters, fileSize)
 	if err != nil {
 		return nil, err
+	}
+	// Note: even though reed solomon can read all the data, the underlying
+	// file object Read([]byte) call implementation may choose not to return EOF
+	// on the last Read call, resulting in the caller to hang, waiting for
+	// more data. So we need to perform one more read.
+	// See https://golang.org/pkg/io/#Reader for further explanation.
+	tmp := make([]byte, 1)
+	n, err := r.Read(tmp)
+	if n != 0 || err != io.EOF {
+		return nil, fmt.Errorf("data read exceeds the specified file size")
 	}
 	var encReaders []io.Reader
 	for i, b := range bufs {
