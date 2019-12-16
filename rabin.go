@@ -64,3 +64,6 @@ func (r *Rabin) ChunkSize() uint64 {
 func (r *Rabin) MetaData() interface{} {
 	return nil
 }
+
+func (rss *Rabin) SetIsDir(v bool) {
+}

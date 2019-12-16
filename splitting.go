@@ -23,6 +23,7 @@ type Splitter interface {
 	NextBytes() ([]byte, error)
 	ChunkSize() uint64
 	MetaData() interface{}
+	SetIsDir(bool)
 }
 
 // A MultiSplitter encapsulates multiple splitters useful for concurrent
@@ -138,6 +139,9 @@ func (ss *sizeSplitterv2) MetaData() interface{} {
 	return nil
 }
 
+func (rss *sizeSplitterv2) SetIsDir(v bool) {
+}
+
 func NewMetaSplitter(r io.Reader, size uint64) Splitter {
 	return &MetaSplitter{
 		r:    r,
@@ -182,4 +186,7 @@ func (ms *MetaSplitter) ChunkSize() uint64 {
 // MetaData returns metadata object from this chunker (none).
 func (ms *MetaSplitter) MetaData() interface{} {
 	return nil
+}
+
+func (rss *MetaSplitter) SetIsDir(v bool) {
 }

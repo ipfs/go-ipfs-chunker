@@ -30,6 +30,7 @@ type reedSolomonSplitter struct {
 	numParity uint64
 	size      uint64
 	fileSize  uint64
+	isDir     bool
 	err       error
 }
 
@@ -171,11 +172,22 @@ type RsMetaMap struct {
 	NumData   uint64
 	NumParity uint64
 	FileSize  uint64
+	IsDir     bool
 }
 
 // MetaData returns metadata object of this reed solomon scheme.
 func (rss *reedSolomonSplitter) MetaData() interface{} {
-	return &RsMetaMap{NumData: rss.numData, NumParity: rss.numParity, FileSize: rss.fileSize}
+	return &RsMetaMap{
+		NumData:   rss.numData,
+		NumParity: rss.numParity,
+		FileSize:  rss.fileSize,
+		IsDir:     rss.isDir,
+	}
+}
+
+// setIsDir sets IsDir field.
+func (rss *reedSolomonSplitter) SetIsDir(v bool) {
+	rss.isDir = v
 }
 
 // setError saves the first error so it can be returned to caller or other functions.
