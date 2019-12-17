@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+const (
+	PrefixForDefault     = "default"
+	PrefixForSize        = "size-"
+	PrefixForRabin       = "rabin"
+	PrefixForReedSolomon = "reed-solomon"
+)
+
 var (
 	ErrRabinMin = errors.New("rabin min must be greater than 16")
 	ErrSize     = errors.New("chunker size must be greater than 0")
@@ -19,10 +26,10 @@ var (
 // "reed-solomon-{#data}-{#parity}-{size}".
 func FromString(r io.Reader, chunker string) (Splitter, error) {
 	switch {
-	case chunker == "" || chunker == "default":
+	case chunker == "" || chunker == PrefixForDefault:
 		return DefaultSplitter(r), nil
 
-	case strings.HasPrefix(chunker, "size-"):
+	case strings.HasPrefix(chunker, PrefixForSize):
 		sizeStr := strings.Split(chunker, "-")[1]
 		size, err := strconv.Atoi(sizeStr)
 		if err != nil {
@@ -32,15 +39,19 @@ func FromString(r io.Reader, chunker string) (Splitter, error) {
 		}
 		return NewSizeSplitter(r, int64(size)), nil
 
-	case strings.HasPrefix(chunker, "rabin"):
+	case strings.HasPrefix(chunker, PrefixForRabin):
 		return parseRabinString(r, chunker)
 
-	case strings.HasPrefix(chunker, "reed-solomon"):
+	case strings.HasPrefix(chunker, PrefixForReedSolomon):
 		return parseReedSolomonString(r, chunker)
 
 	default:
 		return nil, fmt.Errorf("unrecognized chunker option: %s", chunker)
 	}
+}
+
+func IsReedSolomon(chunker string) bool {
+	return strings.HasPrefix(chunker, PrefixForReedSolomon)
 }
 
 func parseRabinString(r io.Reader, chunker string) (Splitter, error) {
@@ -92,13 +103,25 @@ func parseRabinString(r io.Reader, chunker string) (Splitter, error) {
 }
 
 func parseReedSolomonString(r io.Reader, chunker string) (Splitter, error) {
-	parts := strings.Split(chunker, "-")
+	rsMetaMap, err := GetRsMetaMapFromString(chunker)
+	if err != nil {
+		return nil, err
+	}
+	return NewReedSolomonSplitter(r,
+		rsMetaMap.NumData,
+		rsMetaMap.NumParity,
+		rsMetaMap.FileSize)
+}
+
+func GetRsMetaMapFromString(str string) (*RsMetaMap, error) {
+	parts := strings.Split(str, "-")
 	switch len(parts) {
 	case 2:
-		return NewReedSolomonSplitter(r,
+		return &RsMetaMap{
 			uint64(DefaultReedSolomonDataShards),
 			uint64(DefaultReedSolomonParityShards),
-			uint64(DefaultReedSolomonShardSize))
+			uint64(DefaultReedSolomonShardSize),
+			false}, nil
 	case 5:
 		nd, err := strconv.Atoi(parts[2])
 		if err != nil {
@@ -124,7 +147,7 @@ func parseReedSolomonString(r io.Reader, chunker string) (Splitter, error) {
 		if size <= 0 {
 			return nil, ErrSize
 		}
-		return NewReedSolomonSplitter(r, uint64(nd), uint64(pd), uint64(size))
+		return &RsMetaMap{uint64(nd), uint64(pd), uint64(size), false}, nil
 	default:
 		return nil, errors.New("incorrect format (expected 'reed-solomon' or 'reed-solomon-[#data]-[#parity]-[size]')")
 	}
