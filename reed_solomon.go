@@ -46,7 +46,7 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 	}
 	// If not a FileInfo object, or fails to fetch a size, try reading
 	// the whole stream in order to obtain size (this is common for testing).
-	if !ok || err != nil {
+	if !ok || err != nil || fi.AbsPath() == "" {
 		// Not a file object, but we need to know the full size before
 		// being streamed for reed-solomon encoding.
 		// Copy it to a buffer as a last resort.
