@@ -2,6 +2,7 @@ package chunk
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -40,13 +41,13 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 	*reedSolomonSplitter, error) {
 	var fileSize int64
 	var err error
-	fi, ok := r.(files.FileInfo)
+	file, ok := r.(files.Node)
 	if ok {
-		fileSize, err = fi.Size()
+		fileSize, err = file.Size()
 	}
 	// If not a FileInfo object, or fails to fetch a size, try reading
 	// the whole stream in order to obtain size (this is common for testing).
-	if !ok || err != nil || fi.AbsPath() == "" {
+	if !ok || err != nil || fileSize <= 0 {
 		// Not a file object, but we need to know the full size before
 		// being streamed for reed-solomon encoding.
 		// Copy it to a buffer as a last resort.
@@ -55,8 +56,12 @@ func NewReedSolomonSplitter(r io.Reader, numData, numParity, size uint64) (
 			return nil, err
 		}
 		fileSize = int64(len(b))
+
 		// Re-pack reader
 		r = bytes.NewReader(b)
+	}
+	if fileSize == 0 {
+		return nil, errors.New("given file is empty")
 	}
 
 	rss, err := rs.NewStreamC(int(numData), int(numParity), true, true)
