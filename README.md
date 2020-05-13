@@ -2,13 +2,9 @@
 
 > go-btfs-chunker implements data Splitters for go-btfs.
 
-`go-btfs-chunker` provides the `Splitter` interface. IPFS splitters read data from a reader an create "chunks". These chunks are used to build the BTFS DAGs (Merkle Tree) and are the base unit to obtain the sums that BTFS uses to address content.
+`go-btfs-chunker` provides the `Splitter` interface. BTFS splitters read data from a reader an create "chunks". These chunks are used to build the BTFS DAGs (Merkle Tree) and are the base unit to obtain the sums that BTFS uses to address content.
 
 The package provides a `SizeSplitter` which creates chunks of equal size and it is used by default in most cases, and a `rabin` fingerprint chunker. This chunker will attempt to split data in a way that the resulting blocks are the same when the data has repetitive patterns, thus optimizing the resulting DAGs.
-
-## Lead Maintainer
-
-[Steven Allen](https://github.com/Stebalien)
 
 ## Table of Contents
 

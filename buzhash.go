@@ -149,3 +149,16 @@ var bytehash = [256]uint32{
 	0x445f825, 0x5a93b47f, 0x5e9cf4be, 0x84da71e7, 0x9d9582b0, 0x9bf835ef,
 	0x591f61e2, 0x43325985, 0x5d2de32e, 0x8d8fbf0f, 0x95b30f38, 0x7ad5b6e,
 	0x4e934edf, 0x3cd4990e, 0x9053e259, 0x5c41857d}
+
+// ChunkSize returns the chunk size of this Splitter.
+func (b *Buzhash) ChunkSize() uint64 {
+	return uint64(b.n)
+}
+
+// MetaData returns metadata object from this chunker (none).
+func (b *Buzhash) MetaData() interface{} {
+	return nil
+}
+
+func (b *Buzhash) SetIsDir(v bool) {
+}
