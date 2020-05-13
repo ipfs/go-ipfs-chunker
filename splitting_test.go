@@ -118,3 +118,9 @@ func (s *clipReader) Read(buf []byte) (int, error) {
 
 	return s.r.Read(buf)
 }
+
+func BenchmarkDefault(b *testing.B) {
+	benchmarkChunker(b, func(r io.Reader) Splitter {
+		return DefaultSplitter(r)
+	})
+}
