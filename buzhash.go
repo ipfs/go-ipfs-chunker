@@ -67,7 +67,7 @@ func (b *Buzhash) NextBytes() ([]byte, error) {
 			state = state ^ bytehash[b.buf[i]]
 		}
 
-                // Scan through the data for a break point.
+		// Scan through the data for a break point.
 		max := b.n - 32 - 1
 		buf := b.buf
 		bufshf := b.buf[32:]
