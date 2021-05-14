@@ -33,60 +33,47 @@ func (b *Buzhash) Reader() io.Reader {
 }
 
 func (b *Buzhash) NextBytes() ([]byte, error) {
-	if b.err != nil {
+	// Read more data into b.buf if there has not been an error.
+	if b.err == nil {
+		n, err := io.ReadFull(b.r, b.buf[b.n:])
+		if err != nil {
+			if err == io.ErrUnexpectedEOF {
+				err = io.EOF
+			}
+			b.err = err
+		}
+		b.n += n
+	}
+
+	// Initialize i to all the buffer data.
+	i := b.n
+
+	// If there is no data left, free b.buf if necessary and return the last error.
+	if i == 0 {
+		if b.buf != nil {
+			pool.Put(b.buf)
+			b.buf = nil
+		}
 		return nil, b.err
 	}
 
-	n, err := io.ReadFull(b.r, b.buf[b.n:])
-	if err != nil {
-		if err == io.ErrUnexpectedEOF || err == io.EOF {
-			buffered := b.n + n
-			if buffered < buzMin {
-				b.err = io.EOF
-				// Read nothing? Don't return an empty block.
-				if buffered == 0 {
-					pool.Put(b.buf)
-					b.buf = nil
-					return nil, b.err
-				}
-				res := make([]byte, buffered)
-				copy(res, b.buf)
+	// If there is more than buzMin data, scan it and set i to the breakpoint.
+	if i > buzMin {
 
-				pool.Put(b.buf)
-				b.buf = nil
-				return res, nil
-			}
-		} else {
-			b.err = err
-			pool.Put(b.buf)
-			b.buf = nil
-			return nil, err
+		// Initialize the hash with the 32 bytes before buzMin.
+		var state uint32 = 0
+		for i = buzMin - 32; i < buzMin; i++ {
+			state = bits.RotateLeft32(state, 1)
+			state = state ^ bytehash[b.buf[i]]
 		}
-	}
 
-	i := buzMin - 32
-
-	var state uint32 = 0
-
-	if buzMin > len(b.buf) {
-		panic("this is impossible")
-	}
-
-	for ; i < buzMin; i++ {
-		state = bits.RotateLeft32(state, 1)
-		state = state ^ bytehash[b.buf[i]]
-	}
-
-	{
-		max := b.n + n - 32 - 1
-
+                // Scan through the data for a break point.
+		max := b.n - 32 - 1
 		buf := b.buf
 		bufshf := b.buf[32:]
-		i = buzMin - 32
 		_ = buf[max]
 		_ = bufshf[max]
-
-		for ; i <= max; i++ {
+		for i = buzMin - 32; i <= max; i++ {
 			if state&buzMask == 0 {
 				break
 			}
@@ -97,11 +84,10 @@ func (b *Buzhash) NextBytes() ([]byte, error) {
 		i += 32
 	}
 
+	// Shuffle remaining data to the start of the buffer and return the chunk.
 	res := make([]byte, i)
 	copy(res, b.buf)
-
-	b.n = copy(b.buf, b.buf[i:b.n+n])
-
+	b.n = copy(b.buf, b.buf[i:b.n])
 	return res, nil
 }
 
