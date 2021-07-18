@@ -17,9 +17,11 @@ func testBuzhashChunking(t *testing.T, buf []byte) (chunkCount int) {
 		t.Fatal(err)
 	}
 
-	r := NewBuzhash(bytes.NewReader(buf))
+	r := NewBuzhash(bytes.NewReader(buf), false)
 
 	var chunks [][]byte
+
+	buzMin := buzMinDefault
 
 	for {
 		chunk, err := r.NextBytes()
@@ -62,14 +64,14 @@ func TestBuzhashChunking(t *testing.T) {
 
 func TestBuzhashChunkReuse(t *testing.T) {
 	newBuzhash := func(r io.Reader) Splitter {
-		return NewBuzhash(r)
+		return NewBuzhash(r, false)
 	}
 	testReuse(t, newBuzhash)
 }
 
 func BenchmarkBuzhash2(b *testing.B) {
 	benchmarkChunker(b, func(r io.Reader) Splitter {
-		return NewBuzhash(r)
+		return NewBuzhash(r, false)
 	})
 }
 

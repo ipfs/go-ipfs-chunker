@@ -48,7 +48,10 @@ func FromString(r io.Reader, chunker string) (Splitter, error) {
 		return parseRabinString(r, chunker)
 
 	case chunker == "buzhash":
-		return NewBuzhash(r), nil
+		return NewBuzhash(r, false), nil
+
+	case chunker == "buzhash-legacy":
+		return NewBuzhash(r, true), nil
 
 	default:
 		return nil, fmt.Errorf("unrecognized chunker option: %s", chunker)

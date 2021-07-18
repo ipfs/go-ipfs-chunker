@@ -8,9 +8,11 @@ import (
 )
 
 const (
-	buzMin  = 128 << 10
-	buzMax  = 512 << 10
-	buzMask = 1<<17 - 1
+	buzMinDefault = 16 << 10
+	buzMaxDefault = 64 << 10
+	buzMinLegacy  = 128 << 10
+	buzMaxLegacy  = 512 << 10
+	buzMask       = 1<<17 - 1
 )
 
 type Buzhash struct {
@@ -18,13 +20,20 @@ type Buzhash struct {
 	buf []byte
 	n   int
 
-	err error
+	err       error
+	buzLegacy bool
 }
 
-func NewBuzhash(r io.Reader) *Buzhash {
+func NewBuzhash(r io.Reader, buzLegacy bool) *Buzhash {
+	buzMax := buzMaxDefault
+	if buzLegacy {
+		buzMax = buzMaxLegacy
+	}
+
 	return &Buzhash{
-		r:   r,
-		buf: pool.Get(buzMax),
+		r:         r,
+		buf:       pool.Get(buzMax),
+		buzLegacy: buzLegacy,
 	}
 }
 
@@ -35,6 +44,11 @@ func (b *Buzhash) Reader() io.Reader {
 func (b *Buzhash) NextBytes() ([]byte, error) {
 	if b.err != nil {
 		return nil, b.err
+	}
+
+	buzMin := buzMinDefault
+	if b.buzLegacy {
+		buzMin = buzMinLegacy
 	}
 
 	n, err := io.ReadFull(b.r, b.buf[b.n:])
