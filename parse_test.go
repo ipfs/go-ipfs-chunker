@@ -78,3 +78,22 @@ func TestParseSize(t *testing.T) {
 		t.Fatalf("Expected 'ErrSizeMax', got: %#v", err)
 	}
 }
+
+func TestParseFastCDC(t *testing.T) {
+	r := bytes.NewReader(randBuf(t, 1000))
+
+	_, err := FromString(r, "fastcdc-64-128-256")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	_, err = FromString(r, fmt.Sprintf("fastcdc-64-128-%d", ChunkSizeLimit))
+	if err != nil {
+		t.Fatalf("Expected success, got: %#v", err)
+	}
+
+	_, err = FromString(r, fmt.Sprintf("fastcdc-64-128-%d", 1+ChunkSizeLimit))
+	if err != ErrSizeMax {
+		t.Fatalf("Expected 'ErrSizeMax', got: %#v", err)
+	}
+}
