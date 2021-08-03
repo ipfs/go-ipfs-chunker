@@ -26,7 +26,8 @@ var (
 
 // FromString returns a Splitter depending on the given string:
 // it supports "default" (""), "size-{size}", "rabin", "rabin-{blocksize}",
-// "rabin-{min}-{avg}-{max}" and "buzhash".
+// "rabin-{min}-{avg}-{max}" and "buzhash", and
+// "fastcdc-{min}-{avg}-{max}".
 func FromString(r io.Reader, chunker string) (Splitter, error) {
 	switch {
 	case chunker == "" || chunker == "default":
@@ -49,6 +50,25 @@ func FromString(r io.Reader, chunker string) (Splitter, error) {
 
 	case chunker == "buzhash":
 		return NewBuzhash(r), nil
+
+	case strings.HasPrefix(chunker, "fastcdc"):
+		sizeStr := strings.Split(chunker, "-")
+		if len(sizeStr) != 4 {
+			return nil, errors.New("incorrect format (expected 'fastcdc-[min]-[avg]-[max]')")
+		}
+		sizes := make([]int, 3)
+		for i := 1; i < len(sizeStr); i++ {
+			size, err := strconv.Atoi(sizeStr[i])
+			if err != nil {
+				return nil, err
+			} else if size <= 0 {
+				return nil, ErrSize
+			} else if size > ChunkSizeLimit {
+				return nil, ErrSizeMax
+			}
+			sizes[i-1] = size
+		}
+		return NewFastCDC(r, sizes[0], sizes[1], sizes[2]), nil
 
 	default:
 		return nil, fmt.Errorf("unrecognized chunker option: %s", chunker)
@@ -109,6 +129,6 @@ func parseRabinString(r io.Reader, chunker string) (Splitter, error) {
 
 		return NewRabinMinMax(r, uint64(min), uint64(avg), uint64(max)), nil
 	default:
-		return nil, errors.New("incorrect format (expected 'rabin' 'rabin-[avg]' or 'rabin-[min]-[avg]-[max]'")
+		return nil, errors.New("incorrect format (expected 'rabin' 'rabin-[avg]' or 'rabin-[min]-[avg]-[max]')")
 	}
 }
