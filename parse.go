@@ -10,7 +10,7 @@ import (
 
 const (
 	// DefaultBlockSize is the chunk size that splitters produce (or aim to).
-	DefaultBlockSize int64 = 1024 * 256
+	DefaultBlockSize int64 = 1024 * 1
 
 	// No leaf block should contain more than 1MiB of payload data ( wrapping overhead aside )
 	// This effectively mandates the maximum chunk size
