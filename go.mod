@@ -9,7 +9,7 @@ require (
 )
 
 require (
-	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gxed/hashland/keccakpg v0.0.1 // indirect
 	github.com/gxed/hashland/murmur3 v0.0.1 // indirect
 	github.com/ipfs/go-cid v0.0.1 // indirect
@@ -23,9 +23,9 @@ require (
 	github.com/multiformats/go-multihash v0.0.1 // indirect
 	github.com/opentracing/opentracing-go v1.0.2 // indirect
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
-	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67 // indirect
-	golang.org/x/net v0.0.0-20190227160552-c95aed5357e7 // indirect
-	golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
+	golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f // indirect
 )
 
 go 1.19
