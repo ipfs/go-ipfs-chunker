@@ -15,21 +15,29 @@ var log = logging.Logger("chunk")
 
 // A Splitter reads bytes from a Reader and creates "chunks" (byte slices)
 // that can be used to build DAG nodes.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.Splitter
 type Splitter interface {
 	Reader() io.Reader
 	NextBytes() ([]byte, error)
 }
 
 // SplitterGen is a splitter generator, given a reader.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.SplitterGen
 type SplitterGen func(r io.Reader) Splitter
 
 // DefaultSplitter returns a SizeSplitter with the DefaultBlockSize.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.DefaultSplitter
 func DefaultSplitter(r io.Reader) Splitter {
 	return NewSizeSplitter(r, DefaultBlockSize)
 }
 
 // SizeSplitterGen returns a SplitterGen function which will create
 // a splitter with the given size when called.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.SizeSplitterGen
 func SizeSplitterGen(size int64) SplitterGen {
 	return func(r io.Reader) Splitter {
 		return NewSizeSplitter(r, size)
@@ -38,6 +46,8 @@ func SizeSplitterGen(size int64) SplitterGen {
 
 // Chan returns a channel that receives each of the chunks produced
 // by a splitter, along with another one for errors.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.Chan
 func Chan(s Splitter) (<-chan []byte, <-chan error) {
 	out := make(chan []byte)
 	errs := make(chan error, 1)
@@ -66,6 +76,8 @@ type sizeSplitterv2 struct {
 }
 
 // NewSizeSplitter returns a new size-based Splitter with the given block size.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.NewSizeSplitter
 func NewSizeSplitter(r io.Reader, size int64) Splitter {
 	return &sizeSplitterv2{
 		r:    r,

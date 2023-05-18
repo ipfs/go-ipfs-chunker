@@ -13,6 +13,7 @@ const (
 	buzMask = 1<<17 - 1
 )
 
+// Deprecated: use github.com/ipfs/boxo/chunker.Buzhash
 type Buzhash struct {
 	r   io.Reader
 	buf []byte
@@ -21,6 +22,7 @@ type Buzhash struct {
 	err error
 }
 
+// Deprecated: use github.com/ipfs/boxo/chunker.NewBuzhash
 func NewBuzhash(r io.Reader) *Buzhash {
 	return &Buzhash{
 		r:   r,
