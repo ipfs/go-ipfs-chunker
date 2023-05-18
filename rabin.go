@@ -8,10 +8,14 @@ import (
 )
 
 // IpfsRabinPoly is the irreducible polynomial of degree 53 used by for Rabin.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.IpfsRabinPoly
 var IpfsRabinPoly = chunker.Pol(17437180132763653)
 
 // Rabin implements the Splitter interface and splits content with Rabin
 // fingerprints.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.Rabin
 type Rabin struct {
 	r      *chunker.Chunker
 	reader io.Reader
@@ -19,6 +23,8 @@ type Rabin struct {
 
 // NewRabin creates a new Rabin splitter with the given
 // average block size.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.NewRabin
 func NewRabin(r io.Reader, avgBlkSize uint64) *Rabin {
 	min := avgBlkSize / 3
 	max := avgBlkSize + (avgBlkSize / 2)
@@ -28,6 +34,8 @@ func NewRabin(r io.Reader, avgBlkSize uint64) *Rabin {
 
 // NewRabinMinMax returns a new Rabin splitter which uses
 // the given min, average and max block sizes.
+//
+// Deprecated: use github.com/ipfs/boxo/chunker.NewRabinMinMax
 func NewRabinMinMax(r io.Reader, min, avg, max uint64) *Rabin {
 	h := fnv.New32a()
 	ch := chunker.New(r, IpfsRabinPoly, h, avg, min, max)
