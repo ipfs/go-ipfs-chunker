@@ -27,7 +27,6 @@ The package provides a `SizeSplitter` which creates chunks of equal size and it 
 
 - [Install](#install)
 - [Usage](#usage)
-- [Contribute](#contribute)
 - [License](#license)
 
 ## Install
@@ -45,12 +44,6 @@ import "github.com/ipfs/go-ipfs-chunker"
 ```
 
 Check the [GoDoc documentation](https://godoc.org/github.com/ipfs/go-ipfs-chunker)
-
-## Contribute
-
-PRs accepted.
-
-Small note: If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
 ## License
 
